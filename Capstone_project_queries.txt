@@ -1,0 +1,56 @@
+Crawlers cli
+============
+aws glue create-database --database-input Name="de-project-db"aws glue get-databases
+
+aws glue create-crawler --name CSVCrawler --role Gluerole --database-name de-project-db --targets S3Targets=[{Path='s3://capstoneproject-bucket/covid19testing/states_current_csv/'},{Path='s3://capstoneproject-bucket/covid19testing/states_daily_csv/'},{Path='s3://capstoneproject-bucket/covid19testing/states_info_csv/'},{Path='s3://capstoneproject-bucket/covid19testing/states_screenshots_csv/'},{Path='s3://capstoneproject-bucket/covid19testing/us_current_csv/'},{Path='s3://capstoneproject-bucket/covid19testing/us_daily_csv/'}]
+
+aws glue get-crawler --name CSVCrawler 
+
+aws glue create-crawler --name JSONCrawler --role Gluerole --database-name de-project-db --targets S3Targets=[{Path='s3://capstoneproject-bucket/covid19testing/us_daily_json/'},{Path='s3://capstoneproject-bucket/covid19testing/states_current_json/'},{Path='s3://capstoneproject-bucket/covid19testing/states_daily_json/'},{Path='s3://capstoneproject-bucket/covid19testing/states_info_json/'},{Path='s3://capstoneproject-bucket/covid19testing/states_screenshots_json/'},{Path='s3://capstoneproject-bucket/covid19testing/us_current_json/'}] 
+
+aws glue get-crawler --name JSONCrawler 
+
+aws glue start-crawler --name CSVCrawler
+
+csv_to_parquet.py
+=================
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from awsglue.context import GlueContext
+from pyspark.context import SparkContext
+from pyspark.sql import SparkSession
+
+# Create a SparkContext
+sc = SparkContext()
+
+# Create a GlueContext and SparkSession
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+
+# Get the job parameters
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'input_path', 'output_path'])
+
+# Get the input and output paths from Glue job parameters
+input_path = args['input_path']
+output_path = args['output_path']
+
+# Read the CSV files from the input path using Spark DataFrame API
+input_data = spark.read.csv(input_path, header=True, inferSchema=True)
+
+# Convert CSV to Parquet
+input_data.write.parquet(output_path)
+
+# Stop the SparkContext
+sc.stop()
+
+glue_job
+========
+Glue job creation
+aws glue create-job --name "CSVToParquetJob" --role "arn:aws:iam::667409444611:role/project-glue-service-role" --command '{"Name": "glueetl", "ScriptLocation":"s3://capstoneproject-bucket/covid19testing/csv_to_parquet.py"}' 
+
+Run the job
+aws glue start-job-run --job-name CSVToParquetJob --arguments '{"--input_path": "s3://capstoneproject-bucket/covid19testing/states_current_csv/", "--output_path": "s3://capstoneproject-bucket/covid19testing/parquet-output-folder/"}'
+
+Job run status
+aws glue get-job-run --job-name CSVToParquetJob --run-id jr_c424d816bf43d5f8e3abaa26fe919d37f2d166f3f23763677f56392ea4f6da59
