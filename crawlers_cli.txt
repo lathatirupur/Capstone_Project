@@ -1,0 +1,11 @@
+aws glue create-database --database-input Name="de-project-db"aws glue get-databases
+
+aws glue create-crawler --name CSVCrawler --role Gluerole --database-name de-project-db --targets S3Targets=[{Path='s3://capstoneproject-bucket/covid19testing/states_current_csv/'},{Path='s3://capstoneproject-bucket/covid19testing/states_daily_csv/'},{Path='s3://capstoneproject-bucket/covid19testing/states_info_csv/'},{Path='s3://capstoneproject-bucket/covid19testing/states_screenshots_csv/'},{Path='s3://capstoneproject-bucket/covid19testing/us_current_csv/'},{Path='s3://capstoneproject-bucket/covid19testing/us_daily_csv/'}]
+
+aws glue get-crawler --name CSVCrawler 
+
+aws glue create-crawler --name JSONCrawler --role Gluerole --database-name de-project-db --targets S3Targets=[{Path='s3://capstoneproject-bucket/covid19testing/us_daily_json/'},{Path='s3://capstoneproject-bucket/covid19testing/states_current_json/'},{Path='s3://capstoneproject-bucket/covid19testing/states_daily_json/'},{Path='s3://capstoneproject-bucket/covid19testing/states_info_json/'},{Path='s3://capstoneproject-bucket/covid19testing/states_screenshots_json/'},{Path='s3://capstoneproject-bucket/covid19testing/us_current_json/'}] 
+
+aws glue get-crawler --name JSONCrawler 
+
+aws glue start-crawler --name CSVCrawler
